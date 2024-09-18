@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  html-to-pdf-service:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MAX_BROWSERS=5
+      - MAX_PAGES_PER_BROWSER=10
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+      - NODE_ENV=production
+    restart: unless-stopped
