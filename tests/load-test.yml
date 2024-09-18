@@ -1,0 +1,13 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+scenarios:
+  - flow:
+      - post:
+          url: "/convert"
+          json:
+            html: "<html><body><h1>Load Test</h1></body></html>"
+          headers:
+            Content-Type: "application/json"
