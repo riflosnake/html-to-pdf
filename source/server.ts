@@ -1,21 +1,21 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import config from './config';
 import browserPool from './services/browserPool';
-import { addConvertEndpoint } from './controllers/pdfController';
-import { addHealthEndpoint } from './controllers/healthController';
-import { errorHandler } from './middlewares/errorHandler';
 import logger from './utils/logger';
 import helmet from 'helmet';
 import setupSwagger from './config/swagger';
+import { addHtmlToPdfEndpoint } from './endpoints/htmlToPdf';
+import { addHealthEndpoint } from './endpoints/health';
+import { errorHandler } from './middlewares/errorHandler';
+import { addUrlToPdfEndpoint } from './endpoints/urlToPdf';
 
 const app = express();
 
-app.use(bodyParser.json({ limit: '1mb' }));
-
 app.use(helmet());
 
-addConvertEndpoint(app);
+addHtmlToPdfEndpoint(app);
+addUrlToPdfEndpoint(app);
+
 addHealthEndpoint(app);
 
 app.use(errorHandler);
