@@ -9,7 +9,6 @@ A scalable and efficient service for converting HTML content to PDF using Puppet
 - **REST API**: Simple API endpoint for HTML to PDF conversion.
 - **Dockerized**: Easy deployment with Docker.
 - **Monitoring and Logging**: Integrated logging and metrics for observability.
-- **Security**: Implements best practices for API security.
 
 ## Getting Started
 
