@@ -26,3 +26,10 @@ A scalable and efficient service for converting HTML content to PDF using Puppet
    ```bash
    git clone https://github.com/riflosnake/html-to-pdf.git
    cd html-to-pdf
+
+### Usage
+
+1. **npm install**
+2. **npm run build**
+3. **npm start**
+   
