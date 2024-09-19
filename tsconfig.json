@@ -13,6 +13,6 @@
         "resolveJsonModule": true,
         "sourceMap": true
     },
-    "include": ["source/**/*"],
+    "include": ["source/**/*", "source/helpers"],
     "exclude": ["node_modules", "dist", "tests"]
 }

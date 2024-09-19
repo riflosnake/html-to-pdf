@@ -42,7 +42,7 @@ class BrowserPool {
             }
         }
 
-        // Wait for a page to become available
+        // Waits for a page to become available
         return new Promise((resolve, reject) => {
             const interval = setInterval(() => {
                 for (const browserObj of this.pool) {
