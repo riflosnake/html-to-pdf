@@ -16,7 +16,7 @@ class BrowserPool {
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--single-process',
-            '--no-zygote'
+            '--no-zygote',
         ];
     }
 
@@ -25,7 +25,7 @@ class BrowserPool {
             const browser = await puppeteer.launch({
                 headless: true,
                 args: this.puppeteerArgs,
-                executablePath: config.puppeteerExecutablePath, // Optional: specify if needed
+                executablePath: config.puppeteerExecutablePath,
             });
             this.pool.push({ browser, pages: new Set<Page>() });
             logger.info(`Initialized browser instance ${i + 1}/${this.maxBrowsers}`);
