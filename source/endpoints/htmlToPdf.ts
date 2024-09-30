@@ -3,21 +3,20 @@ import { Request, Response, NextFunction } from 'express';
 import { convertHtmlToPdf } from '../services/converters';
 import { pdfRequestHandler } from '../helpers/pdfRequestHandler';
 
-// TODO: Fix swagger documentation, currently it doesn't show any specs, as soon as i introduced
-// another endpoint
 /**
  * @swagger
  * /convert/html:
  *   post:
  *     summary: Convert HTML to PDF
- *     description: Converts provided raw HTML content into a PDF document.
+ *     description: Converts provided raw HTML content into a PDF document. The service accepts HTML input as `text/html` and returns a binary PDF file.
  *     requestBody:
  *       required: true
  *       content:
  *         text/html:
  *           schema:
  *             type: string
- *             description: The raw HTML content to convert.
+ *             description: The raw HTML content to be converted into a PDF.
+ *           example: "<html><body><h1>Hello World</h1></body></html>"
  *     responses:
  *       200:
  *         description: PDF generated successfully.
@@ -26,10 +25,27 @@ import { pdfRequestHandler } from '../helpers/pdfRequestHandler';
  *             schema:
  *               type: string
  *               format: binary
+ *           example: "(Binary PDF Data)"
  *       400:
- *         description: Bad Request - HTML content is missing or invalid.
+ *         description: Bad Request - The request is invalid, possibly due to missing or incorrect HTML content.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "HTML content is missing or invalid."
  *       500:
- *         description: Internal Server Error - Failed to generate PDF.
+ *         description: Internal Server Error - The server encountered an error while generating the PDF.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to generate PDF due to server error."
  */
 async function convertHtmlToPdfHandler(req: Request, res: Response, next: NextFunction)
 {
