@@ -3,7 +3,7 @@ import config from './config';
 import browserPool from './services/browserPool';
 import logger from './utils/logger';
 import helmet from 'helmet';
-import setupSwagger from './config/swagger';
+import setupSwagger, { openSwaggerInBrowser } from './config/swagger';
 import { addHtmlToPdfEndpoint } from './endpoints/htmlToPdf';
 import { addHealthEndpoint } from './endpoints/health';
 import { errorHandler } from './middlewares/errorHandler';
@@ -25,9 +25,15 @@ setupSwagger(app);
 async function startServer() {
     try {
         await browserPool.initialize();
+
         app.listen(config.port, () => {
-            logger.info(`Server listening at http://localhost:${config.port}`);
-            logger.info(`Swagger available at http://localhost:${config.port}/swagger`);
+
+            const baseUrl = `http://${process.env.HOSTNAME || 'localhost'}:${config.port}`;
+            
+            logger.info(`Server listening at ${baseUrl}`);
+            logger.info(`Swagger available at ${baseUrl}/swagger`);
+
+            openSwaggerInBrowser(`${baseUrl}/swagger`);
         });
     } catch (error) {
         logger.error('Failed to initialize browser pool', error);

@@ -1,6 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import express from 'express';
+import { spawn } from 'child_process';
 
 // Define the options for swagger-jsdoc
 const options = {
@@ -25,5 +26,20 @@ const swaggerSpec = swaggerJsdoc(options);
 const setupSwagger = (app: express.Express) => {
   app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 };
+
+export const openSwaggerInBrowser = (url: string) => {
+  const platform = process.platform;
+  let command;
+
+  if (platform === 'win32') {
+      command = 'start';
+  } else if (platform === 'darwin') {
+      command = 'open';
+  } else {
+      command = 'xdg-open';
+  }
+
+  spawn(command, [url], { shell: true });
+}
 
 export default setupSwagger;
