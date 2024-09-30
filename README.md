@@ -31,4 +31,13 @@ A scalable and efficient service for converting HTML content to PDF using Puppet
 1. **npm install**
 2. **npm run build**
 3. **npm start**
-   
+
+### Config example
+
+```env
+PORT=3000
+MAX_BROWSERS=5
+MAX_PAGES_PER_BROWSER=10
+PUPPETEER_EXECUTABLE_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
+TIMEOUT_MS=30000
+```
