@@ -8,14 +8,21 @@ import { pdfRequestHandler } from '../helpers/pdfRequestHandler';
  * /convert/url:
  *   post:
  *     summary: Convert URL to PDF
- *     description: Converts HTML from provided URL into a PDF document.
+ *     description: Converts HTML content from the provided URL into a PDF document. The service fetches the HTML content from the given URL and converts it into a PDF file.
  *     requestBody:
  *       required: true
  *       content:
- *         text/html:
+ *         application/json:
  *           schema:
- *             type: string
- *             description: The url, content of which will be converted.
+ *             type: object
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 format: uri
+ *                 description: The URL of the webpage whose content will be converted into a PDF.
+ *                 example: "https://example.com"
+ *           example:
+ *             url: "https://example.com"
  *     responses:
  *       200:
  *         description: PDF generated successfully.
@@ -24,10 +31,27 @@ import { pdfRequestHandler } from '../helpers/pdfRequestHandler';
  *             schema:
  *               type: string
  *               format: binary
+ *           example: "(Binary PDF Data)"
  *       400:
- *         description: Bad Request - HTML content is missing or invalid.
+ *         description: Bad Request - The URL is missing, invalid, or the content from the URL cannot be retrieved or converted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid URL or failed to retrieve content."
  *       500:
- *         description: Internal Server Error - Failed to generate PDF.
+ *         description: Internal Server Error - The server encountered an error while generating the PDF from the URL.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to generate PDF due to server error."
  */
 async function convertUrlToPdfHandler(req: Request, res: Response, next: NextFunction)
 {

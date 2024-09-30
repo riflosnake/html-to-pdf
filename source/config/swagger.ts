@@ -2,7 +2,6 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import express from 'express';
 
-// Define the options for swagger-jsdoc
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -17,7 +16,7 @@ const options = {
       },
     ],
   },
-  apis: ['./source/controllers/*.ts'],
+  apis: ['./source/endpoints/*.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
