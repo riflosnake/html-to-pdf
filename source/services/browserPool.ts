@@ -10,7 +10,9 @@ class BrowserPool {
     private puppeteerArgs: string[];
     private minBrowsers: number;
     private timeoutMs: number;
-    private requestQueue: { resolve: (page: Page) => void; reject: (err: Error) => void; timeoutId: NodeJS.Timeout }[] = [];
+    private requestQueue: { resolve: (page: Page) => void;
+                            reject: (err: Error) => void;
+                            timeoutId: NodeJS.Timeout }[] = [];
     private mutex: Mutex = new Mutex();
 
     constructor(maxBrowsers: number, maxPagesPerBrowser: number, minBrowsers: number, timeoutMs: number) {
@@ -165,6 +167,9 @@ class BrowserPool {
     }
 }
 
-const browserPool = new BrowserPool(config.maxBrowsers, config.maxPagesPerBrowser, config.minBrowsers, config.timeoutMs);
+const browserPool = new BrowserPool(config.maxBrowsers,
+                                    config.maxPagesPerBrowser,
+                                    config.minBrowsers,
+                                    config.timeoutMs);
 
 export default browserPool;
