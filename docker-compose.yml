@@ -7,8 +7,10 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
+      - MIN_BROWERS=2
       - MAX_BROWSERS=5
       - MAX_PAGES_PER_BROWSER=10
+      - SCALE_CAPACITY_IN_PERCENTAGE=80
       - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
       - NODE_ENV=production
     restart: unless-stopped

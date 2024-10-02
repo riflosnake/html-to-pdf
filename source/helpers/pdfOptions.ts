@@ -24,5 +24,6 @@ export async function configurePdfOptions(options: any, page: Page) {
         footerTemplate: options.footerTemplate || '',
         pageRanges: options.pageRanges
     };
+    
     return pdfOptions;
 }

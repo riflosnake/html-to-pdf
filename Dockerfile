@@ -9,8 +9,6 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    nodejs \
-    yarn \
     && rm -rf /var/cache/apk/*
 
 # Set environment variables for Puppeteer
@@ -29,6 +27,9 @@ RUN npm ci --only=production
 
 # Copy the rest of the application code
 COPY . .
+
+# Ensure the correct Puppeteer Chromium executable is used
+RUN npm rebuild puppeteer
 
 # Build the TypeScript code
 RUN npm run build
