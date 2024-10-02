@@ -1,4 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { Mutex } from 'async-mutex';
 import config from '../config';
 import logger from '../utils/logger';
 
@@ -9,9 +10,8 @@ class BrowserPool {
     private puppeteerArgs: string[];
     private minBrowsers: number;
     private timeoutMs: number;
-    private requestQueue: { resolve: (page: Page) => void;
-        reject: (err: Error) => void;
-        timeoutId: NodeJS.Timeout }[] = [];
+    private requestQueue: { resolve: (page: Page) => void; reject: (err: Error) => void; timeoutId: NodeJS.Timeout }[] = [];
+    private mutex: Mutex = new Mutex();
 
     constructor(maxBrowsers: number, maxPagesPerBrowser: number, minBrowsers: number, timeoutMs: number) {
         this.maxBrowsers = maxBrowsers;
@@ -105,18 +105,19 @@ class BrowserPool {
     }
 
     async getPage(): Promise<Page> {
-        for (const browserObj of this.pool) {
-            if (browserObj.pages.size < this.maxPagesPerBrowser) {
-                const page = await browserObj.browser.newPage();
-
-                browserObj.pages.add(page);
-                logger.debug(`New page opened. Total pages in browser #${this.pool.indexOf(browserObj)}: ${browserObj.pages.size}`);
-
-                return page;
+        return this.mutex.runExclusive(async () => {
+            for (const browserObj of this.pool) {
+                if (browserObj.pages.size < this.maxPagesPerBrowser) {
+                    const page = await browserObj.browser.newPage();
+                    browserObj.pages.add(page);
+                    logger.debug(`New page opened. Total pages in browser #${this.pool.indexOf(browserObj)}: ${browserObj.pages.size}`);
+                    await this.scaleIfNeeded();
+                    return page;
+                }
             }
-        }
 
-        return this.queueRequest();
+            return this.queueRequest();
+        });
     }
 
     private queueRequest(): Promise<Page> {
@@ -132,14 +133,16 @@ class BrowserPool {
     }
 
     async releasePage(page: Page) {
-        for (const browserObj of this.pool) {
-            if (browserObj.pages.has(page)) {
-                await this.closePage(browserObj, page);
-                await this.serveQueuedRequest(browserObj);
-                await this.scaleIfNeeded();
-                break;
+        await this.mutex.runExclusive(async () => {
+            for (const browserObj of this.pool) {
+                if (browserObj.pages.has(page)) {
+                    await this.closePage(browserObj, page);
+                    await this.serveQueuedRequest(browserObj);
+                    await this.scaleIfNeeded();
+                    break;
+                }
             }
-        }
+        });
     }
 
     private async closePage(browserObj: { browser: Browser; pages: Set<Page> }, page: Page) {
@@ -162,9 +165,6 @@ class BrowserPool {
     }
 }
 
-const browserPool = new BrowserPool(config.maxBrowsers,
-                                    config.maxPagesPerBrowser,
-                                    config.minBrowsers,
-                                    config.timeoutMs);
+const browserPool = new BrowserPool(config.maxBrowsers, config.maxPagesPerBrowser, config.minBrowsers, config.timeoutMs);
 
 export default browserPool;
