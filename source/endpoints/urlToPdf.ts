@@ -12,17 +12,11 @@ import { pdfRequestHandler } from '../helpers/pdfRequestHandler';
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         text/plain:
  *           schema:
- *             type: object
- *             properties:
- *               url:
- *                 type: string
- *                 format: uri
- *                 description: The URL of the webpage whose content will be converted into a PDF.
- *                 example: "https://example.com"
- *           example:
- *             url: "https://example.com"
+ *             type: string
+ *             description: The URL to be converted into a PDF.
+ *           example: "url"
  *     responses:
  *       200:
  *         description: PDF generated successfully.
