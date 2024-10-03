@@ -1,41 +1,20 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18-alpine
+FROM node:18
 
-# Install dependencies for Puppeteer
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    && rm -rf /var/cache/apk/*
-
-# Set environment variables for Puppeteer
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    NODE_ENV=production
-
-# Create app directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 COPY package*.json ./
+RUN npm install
 
-# Install app dependencies
-RUN npm ci --only=production
-
-# Copy the rest of the application code
 COPY . .
 
-# Ensure the correct Puppeteer Chromium executable is used
-RUN npm rebuild puppeteer
+# Install Chromium
+RUN apt-get update && apt-get install -y --fix-missing chromium
 
-# Build the TypeScript code
-RUN npm run build
+# Set an environment variable to point Puppeteer to the Chromium binary
+ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium"
 
-# Expose the port the app runs on
 EXPOSE 3000
 
-# Define the command to run the app
-CMD ["node", "dist/server.js"]
+CMD ["npm", "start"]

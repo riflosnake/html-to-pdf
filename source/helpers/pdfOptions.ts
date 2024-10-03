@@ -14,7 +14,7 @@ export async function configurePdfOptions(options: any, page: Page) {
             bottom: options['margin-bottom'] || '0px',
             left: options['margin-left'] || '0px'
         },
-        printBackground: options.printBackground || false,
+        printBackground: options.printBackground || true,
         preferCSSPageSize: options.preferCSSPageSize || false,
         width: options.width,
         height: options.height,

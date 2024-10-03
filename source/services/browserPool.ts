@@ -1,5 +1,4 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { Mutex } from 'async-mutex';
 import config from '../config';
 import logger from '../utils/logger';
 
@@ -10,10 +9,7 @@ class BrowserPool {
     private puppeteerArgs: string[];
     private minBrowsers: number;
     private timeoutMs: number;
-    private requestQueue: { resolve: (page: Page) => void;
-                            reject: (err: Error) => void;
-                            timeoutId: NodeJS.Timeout }[] = [];
-    private mutex: Mutex = new Mutex();
+    private requestQueue: { resolve: (page: Page) => void; reject: (err: Error) => void; timeoutId: NodeJS.Timeout }[] = [];
 
     constructor(maxBrowsers: number, maxPagesPerBrowser: number, minBrowsers: number, timeoutMs: number) {
         this.maxBrowsers = maxBrowsers;
@@ -57,9 +53,9 @@ class BrowserPool {
         if (idleBrowserObj) {
             await idleBrowserObj.browser.close();
             this.pool = this.pool.filter(browserObj => browserObj !== idleBrowserObj);
-            logger.info('Closed an idle browser instance.');
+            logger.info(`Closed an idle browser instance. Total browsers active: ${this.pool.length}`);
         } else {
-            logger.warn('No idle browsers available to close.');
+            logger.info(`No idle browsers available to close. Total browsers active: ${this.pool.length}`);
         }
     }
 
@@ -74,13 +70,15 @@ class BrowserPool {
     private shouldScaleUp(): boolean {
         const occupiedPages = this.calculateOccupiedPages();
         const totalCapacity = this.calculateTotalCapacity();
-        return occupiedPages / totalCapacity >= 0.8 && this.pool.length < this.maxBrowsers;
+        return occupiedPages / totalCapacity >= config.capacityToScaleInPercentage / 100
+            && this.pool.length < this.maxBrowsers;
     }
 
     private shouldScaleDown(): boolean {
         const occupiedPages = this.calculateOccupiedPages();
         const totalCapacity = this.calculateTotalCapacity();
-        return this.pool.length > this.minBrowsers && occupiedPages / totalCapacity <= 0.8;
+        return this.pool.length > this.minBrowsers 
+            && occupiedPages / totalCapacity <= config.capacityToScaleInPercentage / 100;
     }
 
     private async scaleIfNeeded() {
@@ -101,25 +99,24 @@ class BrowserPool {
                 const newPage = await browserObj.browser.newPage();
                 browserObj.pages.add(newPage);
                 nextRequest.resolve(newPage);
-                logger.debug('Served a queued request.');
+                logger.info('Served a queued request.');
+                await this.scaleIfNeeded();
             }
         }
     }
 
     async getPage(): Promise<Page> {
-        return this.mutex.runExclusive(async () => {
-            for (const browserObj of this.pool) {
-                if (browserObj.pages.size < this.maxPagesPerBrowser) {
-                    const page = await browserObj.browser.newPage();
-                    browserObj.pages.add(page);
-                    logger.debug(`New page opened. Total pages in browser #${this.pool.indexOf(browserObj)}: ${browserObj.pages.size}`);
-                    await this.scaleIfNeeded();
-                    return page;
-                }
+        for (const browserObj of this.pool) {
+            if (browserObj.pages.size < this.maxPagesPerBrowser) {
+                const page = await browserObj.browser.newPage();
+                browserObj.pages.add(page);
+                logger.debug(`New page opened. Total pages in browser #${this.pool.indexOf(browserObj)}: ${browserObj.pages.size}`);
+                await this.scaleIfNeeded();
+                return page;
             }
+        }
 
-            return this.queueRequest();
-        });
+        return this.queueRequest();
     }
 
     private queueRequest(): Promise<Page> {
@@ -135,16 +132,14 @@ class BrowserPool {
     }
 
     async releasePage(page: Page) {
-        await this.mutex.runExclusive(async () => {
-            for (const browserObj of this.pool) {
-                if (browserObj.pages.has(page)) {
-                    await this.closePage(browserObj, page);
-                    await this.serveQueuedRequest(browserObj);
-                    await this.scaleIfNeeded();
-                    break;
-                }
+        for (const browserObj of this.pool) {
+            if (browserObj.pages.has(page)) {
+                await this.closePage(browserObj, page);
+                await this.serveQueuedRequest(browserObj);
+                await this.scaleIfNeeded();
+                break;
             }
-        });
+        }
     }
 
     private async closePage(browserObj: { browser: Browser; pages: Set<Page> }, page: Page) {
@@ -160,16 +155,18 @@ class BrowserPool {
     async closeAllBrowsers() {
         for (const browserObj of this.pool) {
             await browserObj.browser.close();
-            logger.info('Browser instance closed.');
+            logger.info(`Browser instance closed. Total browsers active: ${this.pool.length}`);
         }
 
         this.pool = [];
     }
 }
 
-const browserPool = new BrowserPool(config.maxBrowsers,
-                                    config.maxPagesPerBrowser,
-                                    config.minBrowsers,
-                                    config.timeoutMs);
+const browserPool = new BrowserPool(
+    config.maxBrowsers,
+    config.maxPagesPerBrowser,
+    config.minBrowsers,
+    config.timeoutMs
+);
 
 export default browserPool;

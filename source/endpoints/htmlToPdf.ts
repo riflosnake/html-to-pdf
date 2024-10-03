@@ -53,12 +53,6 @@ async function convertHtmlToPdfHandler(req: Request, res: Response, next: NextFu
 }
 
 export const addHtmlToPdfEndpoint = (app: express.Express) => {
-    // TODO: Inserting HTML into a JSON requires formatting beforehand, need to rethink
-    // thinking about providing three endpoints
-    // One which will be like this, accept as body raw html, and options as query parameters
-    // and other two, which will have json body type, one for html, one for url
-    // and the options will be properties on the body json also, making it cleaner
-    // app.use('/convert/html', express.json({ limit: '1mb' }));
     app.use('/convert/html', express.text({ type: 'text/html', limit: '1mb' }))
     app.post('/convert/html', convertHtmlToPdfHandler);
   };
