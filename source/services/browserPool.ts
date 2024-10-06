@@ -17,6 +17,7 @@ class BrowserPool {
                             timeoutId: NodeJS.Timeout }[] = [];
     private getPageMutex: Mutex = new Mutex();
     private releasePageMutex: Mutex = new Mutex();
+    private browserMutex: Mutex = new Mutex();
 
     constructor(minBrowsers: number, maxBrowsers: number, maxPagesPerBrowser: number, timeoutMs: number) {
         this.minBrowsers = minBrowsers;
@@ -39,31 +40,35 @@ class BrowserPool {
     }
 
     private async launchBrowser() {
-        if (this.pool.length >= this.maxBrowsers) {
-            logger.warn('Max browsers reached.');
-            return;
-        }
-
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: this.puppeteerArgs,
-            executablePath: config.puppeteerExecutablePath,
-        });
-
-        this.pool.push({ browser, pages: new Set<Page>() });
-        logger.info(`Initialized new browser instance. Total browsers active: ${this.pool.length}`);
+        return this.browserMutex.runExclusive(async () => {
+            if (this.pool.length >= this.maxBrowsers) {
+                logger.warn('Max browsers reached.');
+                return;
+            }
+    
+            const browser = await puppeteer.launch({
+                headless: true,
+                args: this.puppeteerArgs,
+                executablePath: config.puppeteerExecutablePath,
+            });
+    
+            this.pool.push({ browser, pages: new Set<Page>() });
+            logger.info(`Initialized new browser instance. Total browsers active: ${this.pool.length}`);
+        })
     }
 
     private async closeBrowser() {
-        const idleBrowserObj = this.pool.find(browserObj => browserObj.pages.size === 0);
-    
-        if (idleBrowserObj) {
-            await idleBrowserObj.browser.close();
-            this.pool = this.pool.filter(browserObj => browserObj !== idleBrowserObj);
-            logger.info('Closed an idle browser instance.');
-        } else {
-            logger.warn('No idle browsers available to close.');
-        }
+        return this.browserMutex.runExclusive(async () => {
+            const idleBrowserObj = this.pool.find(browserObj => browserObj.pages.size === 0);
+            
+            if (idleBrowserObj) {
+                await idleBrowserObj.browser.close();
+                this.pool = this.pool.filter(browserObj => browserObj !== idleBrowserObj);
+                logger.info('Closed an idle browser instance.');
+            } else {
+                logger.warn('No idle browsers available to close.');
+            }
+        })
     }
 
     private calculateOccupiedPages(): number {
@@ -88,10 +93,10 @@ class BrowserPool {
 
     private async scaleIfNeeded() {
         if (this.shouldScaleUp()) {
-            logger.info(`Scaling up: ${this.scaleUpThreshold}% capacity reached.`);
+            logger.info(`Scaling up: ${this.scaleUpThreshold * 100}% capacity reached.`);
             await this.launchBrowser();
         } else if (this.shouldScaleDown()) {
-            logger.info(`Scaling down: Usage below ${this.scaleDownThreshold}% capacity.`);
+            logger.info(`Scaling down: Usage below ${this.scaleDownThreshold * 100}% capacity.`);
             await this.closeBrowser();
         }
     }
