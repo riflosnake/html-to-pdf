@@ -88,10 +88,10 @@ class BrowserPool {
 
     private async scaleIfNeeded() {
         if (this.shouldScaleUp()) {
-            logger.info(`Scaling up: ${config.capacityToScaleInPercentage}% capacity reached.`);
+            logger.info(`Scaling up: ${this.scaleUpThreshold}% capacity reached.`);
             await this.launchBrowser();
         } else if (this.shouldScaleDown()) {
-            logger.info(`Scaling down: Usage below ${config.capacityToScaleInPercentage}% capacity.`);
+            logger.info(`Scaling down: Usage below ${this.scaleDownThreshold}% capacity.`);
             await this.closeBrowser();
         }
     }
