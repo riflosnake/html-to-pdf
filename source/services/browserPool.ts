@@ -11,7 +11,7 @@ class BrowserPool {
     private puppeteerArgs: string[];
     private timeoutMs: number;
     private scaleUpThreshold = 0.8;
-    private scaleDownThreshold = 0.5;
+    private scaleDownThreshold = 0.4;
     private requestQueue: { resolve: (page: Page) => void;
                             reject: (err: Error) => void;
                             timeoutId: NodeJS.Timeout }[] = [];
@@ -126,16 +126,6 @@ class BrowserPool {
         });
     }
 
-    private queueRequest(): Promise<Page> {
-        return new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-                reject(new Error('Request timed out waiting for a free page.'));
-            }, this.timeoutMs);
-
-            this.requestQueue.push({ resolve, reject, timeoutId });
-        });
-    }
-
     async releasePage(page: Page) {
         await this.releasePageMutex.runExclusive(async () => {
             for (const browserObj of this.pool) {
@@ -146,6 +136,16 @@ class BrowserPool {
                     break;
                 }
             }
+        });
+    }
+
+    private queueRequest(): Promise<Page> {
+        return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+                reject(new Error('Request timed out waiting for a free page.'));
+            }, this.timeoutMs);
+
+            this.requestQueue.push({ resolve, reject, timeoutId });
         });
     }
 
