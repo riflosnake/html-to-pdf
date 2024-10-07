@@ -11,7 +11,7 @@ class BrowserPool {
     private puppeteerArgs: string[];
     private timeoutMs: number;
     private scaleUpThreshold = 0.8;
-    private scaleDownThreshold = 0.4;
+    private scaleDownThreshold = 0.2;
     private requestQueue: { resolve: (page: Page) => void;
                             reject: (err: Error) => void;
                             timeoutId: NodeJS.Timeout }[] = [];
